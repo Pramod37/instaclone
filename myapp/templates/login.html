@@ -1,0 +1,39 @@
+ <form method="post">
+     {% csrf_token %}
+<style>
+
+body{
+
+  text-align: center;
+  background: url("https://ak3.picdn.net/shutterstock/videos/26423345/thumb/1.jpg");
+  background-size: cover ;
+  background-repeat: no-repeat;
+  background-position: center;
+
+  color: white;
+  font-family: helvetica;}
+
+ img{
+  border-radius: 100%;
+  border: 1px solid #ddd;
+  padding: 5px;
+  width: 130px;
+ }
+
+  </style>
+<body>
+ <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTE_asoZyfEzU-Fqj-zUbfhS7Ea0TnowkNhGwi5ASCHL4Xtjxya">
+      <div>
+          <label for="username">Username: </label>
+          <input id="username" type="text" name="username" value={{ username }}>
+      </div>
+
+      <div>
+          <label for="password">Password: </label>
+          <input id="password" type="password" name="password" value={{ password }}>
+      </div>
+     <h3>{{message}}</h3>
+
+      <input type="submit" value="Log In">
+</body>
+ </form>

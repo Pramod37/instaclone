@@ -1,0 +1,73 @@
+<html>
+<head>
+<style>
+body{
+  text-align: center;
+  background: url("http://www.blueskysamoa.ws/wp-content/uploads/2014/09/Bluesky-Website-Banner_Background-1.png");
+  background-size: cover ;
+  background-repeat: no-repeat;
+  background-position: center;
+  color: white;
+  font-family: helvetica;
+ }
+img{
+  border-radius: 100%;
+  border: 1px solid #ddd;
+  padding: 5px;
+  width: 130px;
+ }
+</style>
+</head>
+<tr>
+
+<tr class="main">
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTE_asoZyfEzU-Fqj-zUbfhS7Ea0TnowkNhGwi5ASCHL4Xtjxya">
+    <h4>{{ today }}</h4>
+
+   <form method="post">
+       {% csrf_token %}
+<tr>
+     <td width = 30% align="left">
+         <label for="username">Username: </label>
+     </td>
+     <td>
+        <input id="username" type="text" name="username" value={{ username }}>
+     </td>
+</tr>
+
+<tr>
+    <td width = 30% align = "left">
+        <label for="name">Name: </label>
+    </td>
+    <td>
+        <input id="name" type="text" name="name" value={{ name }}>
+    </td>
+</tr>
+
+<tr>
+    <td width = 30% align = "left">
+        <label for="email">Email: </label>
+    </td>
+    <td>
+        <input id="email" type="text" name="email" value={{ email }}>
+    </td>
+</tr>
+
+<tr>
+    <td width = 30% align = "left">
+        <label for="password">Password: </label></td>
+    <td>
+        <input id="password" type="password" name="password" value={{ password }}>
+    </td>
+</tr>
+
+<td>
+    <input type="submit" value="Sign Up">
+</td>
+
+</form>
+
+<a>Click</a>   <a href="/login/">Login</a>  <a>If u already an user!</a>
+
+</body>
+</html>
