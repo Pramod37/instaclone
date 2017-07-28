@@ -14,16 +14,13 @@
 
 
     {% for post in posts %}
-
-
-
-        <h3> Posted by: {{ post.user.username }} </h3>
+        <h4> Posted by: {{ post.user.username }} </h4>
         <p>[{{ post.created_on }}]</p>
         <img style="display:inline-block; width:350px; height:300px;"
              src="{{ post.image_url }}" /><br>
         <span  style="display:inline-block;">{{ post.caption }}</span><br/><br/>
         <div style="display:inline-block">
-            {{ post.like_count }} likes this
+            {{ post.like_count }} like
          </div>
         <div style="display:inline-block">
             <form method="POST" action="/like/">
