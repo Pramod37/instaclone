@@ -2,38 +2,57 @@
 from __future__ import unicode_literals
 
 from django.shortcuts import render, redirect
-from datetime import datetime
+from datetime import timedelta
+from django.utils import timezone
 from forms import SignUpForm, LoginForm, PostForm, LikeForm, CommentForm, UpVoteForm
 from django.contrib.auth.hashers import make_password, check_password
-from models import UserModel, SessionToken, PostModel, LikeModel, CommentModel
+from models import UserModel, SessionToken, PostModel, LikeModel, CommentModel, CategoryModel
 from instaclone.settings import BASE_DIR
 from imgurpython import ImgurClient
 from clarifai.rest import ClarifaiApp
+import json
+import sendgrid
+import os
+from sendgrid.helpers.mail import *
 
-# Create your views here.
-
-# view for signup
+# signup view has the functionality of signing up for a new user
+# it also sends a welcome email via sendgrid
 
 def signup_view(request):
-    today = datetime.now()
+
     if request.method == "POST":
         form = SignUpForm(request.POST)
         if form.is_valid():
-            username = form.cleaned_data['username']
-            name = form.cleaned_data['name']
-            email = form.cleaned_data['email']
-            password = form.cleaned_data['password']
-            user = UserModel(name=name, password=make_password(password), email=email, username=username)
-            user.save()
-            return render(request, 'success.html')
-        else:
-            form = SignUpForm()
+            if (len(form.cleaned_data['username']) < 5 or set('[~!#$%^&*()_+{}":;\']+$ " "').intersection(form.cleaned_data['username'])):
+                return render(request, 'invalid.html')
+            else:
+                if (len(form.cleaned_data["password"]) > 5):
+                    username = form.cleaned_data['username']
+                    name = form.cleaned_data['name']
+                    email = form.cleaned_data['email']
+                    password = form.cleaned_data['password']
+                    user = UserModel(name=name, password=make_password(password), email=email, username=username)
+                    user.save()
+                    sg = sendgrid.SendGridAPIClient(apikey=os.environ.get('wNiZdpTlqpiE-QeuIu-A.-QoPtzGhPcGMRXGfI7Jw6wYJjg_BFUZXvwKL4Bgrvr4'))
+                    from_email = Email("prmdmriu@gmail.com")
+                    to_email = Email(form.cleaned_data['email'])
+                    subject = "Welcome to Smartblog"
+                    content = Content("text/plain","Team Smartblog welcomes you!\n We hope you enjoy sharing your precious moments blogging them /n")
+                    mail = Mail(from_email, subject, to_email, content)
+                    response = sg.client.mail.send.post(request_body=mail.get())
+                    print(response.status_code)
+                    print(response.body)
+                    print(response.headers)
+                    return render(request, 'success.html')
+                else:
+                    form = SignUpForm()
     elif request.method == "GET":
         form = SignUpForm()
 
-    return render(request, 'index.html', {'today': today}, {'form': form})
+    return render(request, 'index.html', {'form': form})
 
-# view for login
+# login view lets the old user login using username and password
+# It creates a session token and incorrect message
 def login_view(request):
     response_data = {}
     if request.method == "POST":
@@ -74,7 +93,10 @@ def check_validation(request):
     if request.COOKIES.get('session_token'):
         session = SessionToken.objects.filter(session_token=request.COOKIES.get('session_token')).first()
         if session:
+            time_to_live = session.created_on + timedelta(days=1)
+        if time_to_live > timezone.now():
             return session.user
+
     else:
         return None
 
@@ -101,12 +123,14 @@ def post_view(request):
                 clarifai_data = []
                 app = ClarifaiApp(api_key='fcfdca12d67a4af7b657c4117ea90128')  # Covers all scopes
                 model = app.models.get("general-v1.3")
-                result = model.predict_by_url(url=post.image_url)
-                for x in range(0, len(result['outputs'][0]['data']['concepts'])):
-                    model = result['outputs'][0]['data']['concepts'][x]['name']
-                    clarifai_data.append(model)
-                for z in range(0, len(clarifai_data)):
-                    print clarifai_data[z]
+                response = model.predict_by_url(url=post.image_url)
+
+                file_name = 'output' + '.json'
+
+                for json_dict in response:
+                    for key, value in response.iteritems():
+                        print("key: {} | value: {}".format(key, value))
+                post.save()
                 return redirect('/feed/')
         else:
             form = PostForm()
@@ -160,6 +184,17 @@ def comment_view(request):
             comment_text = form.cleaned_data.get('comment_text')
             comment = CommentModel.objects.create(user=user, post_id=post_id, comment_text=comment_text)
             comment.save()
+            sg = sendgrid.SendGridAPIClient(apikey=os.environ.get('wNiZdpTlqpiE-QeuIu-A.-QoPtzGhPcGMRXGfI7Jw6wYJjg_BFUZXvwKL4Bgrvr4'))
+            from_email = Email("prmdmriu@gmail.com")
+            to_email = Email(comment.post.user.email)
+            subject = "Welcome to Instaclone"
+            content = Content("text/plain",
+                              "Team Smartblog welcomes you!\n We hope you enjoy sharing your precious moments blogging them /n")
+            mail = Mail(from_email, subject, to_email, content)
+            response = sg.client.mail.send.post(request_body=mail.get())
+            print(response.status_code)
+            print(response.body)
+            print(response.headers)
             return redirect('/feed/')
         else:
             return redirect('/feed/')
@@ -201,4 +236,27 @@ def UpVote_view(request):
         return redirect('/feed/')
     else:
         return redirect('/feed/')
+
+
+# this view show the automatic categories
+def add_category(post):
+    app = ClarifaiApp(api_key='fcfdca12d67a4af7b657c4117ea90128')
+    model = app.models.get("general-v1.3")
+    response = model.predict_by_url(url=post.image_url)
+    if response["status"]["code"]==10000:
+        if response["outputs"]:
+            if response["output"][0]["data"]:
+                if response["output"][0]["data"]["concepts"]:
+                    for index in range (0,len(response["outputs"][0]["data"]["concepts"])):
+                        category=CategoryModel(post=post,category_text=response['outputs'][0]['data']['concepts'][index]['name'])
+                        category.save()
+                else:
+                    print 'no concepts error'
+            else:
+                print 'no data list error'
+        else:
+            print 'no outtput list error'
+    else:
+        print 'response code error'
+
 

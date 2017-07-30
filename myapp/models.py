@@ -71,3 +71,13 @@ class CommentModel(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
 
+
+class CategoryModel(models.Model):
+	user = models.ForeignKey(UserModel)
+	post = models.ForeignKey(PostModel)
+	category_text=models.CharField(max_length=255)
+
+	@property
+	def category(self):
+		return CategoryModel.objects.filter(post=self)
+

@@ -48,6 +48,16 @@
             </form>
         </div>
 
+        <div>
+            <p>
+                Categories
+            </p>
+            {% for category in post.category %}
+            <span>{{category.category_text}}</span>
+            {% endfor %}
+
+
+        </div>
 
         <div>
             <form method="POST" action="/comment/">
