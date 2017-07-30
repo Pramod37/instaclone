@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.shortcuts import render, redirect
 from datetime import datetime
-from forms import SignUpForm, LoginForm, PostForm, LikeForm, CommentForm
+from forms import SignUpForm, LoginForm, PostForm, LikeForm, CommentForm, UpVoteForm
 from django.contrib.auth.hashers import make_password, check_password
 from models import UserModel, SessionToken, PostModel, LikeModel, CommentModel
 from instaclone.settings import BASE_DIR
@@ -12,8 +12,7 @@ from clarifai.rest import ClarifaiApp
 
 # Create your views here.
 
-
-#view for signup
+# view for signup
 
 def signup_view(request):
     today = datetime.now()
@@ -34,7 +33,7 @@ def signup_view(request):
 
     return render(request, 'index.html', {'today': today}, {'form': form})
 
-#view for login
+# view for login
 def login_view(request):
     response_data = {}
     if request.method == "POST":
@@ -62,12 +61,15 @@ def login_view(request):
 
     return render(request, 'login.html' ,response_data)
 
-#view for feed page
+
+# view for feed page
+
 def feed_view(request):
     return render(request, 'feed.html')
 
 
 # For validating the session
+
 def check_validation(request):
     if request.COOKIES.get('session_token'):
         session = SessionToken.objects.filter(session_token=request.COOKIES.get('session_token')).first()
@@ -76,14 +78,15 @@ def check_validation(request):
     else:
         return None
 
-#view to upload a image in post
+
+# view to upload a image in post
+
 def post_view(request):
     user = check_validation(request)
     if user:
         if request.method == 'GET':
             form = PostForm()
             return render(request, 'post.html', {'form': form})
-
         elif request.method == 'POST':
             form = PostForm(request.POST, request.FILES)
             if form.is_valid():
@@ -91,7 +94,6 @@ def post_view(request):
                 caption = form.cleaned_data.get('caption')
                 post = PostModel(user=user, image=image, caption=caption)
                 post.save()
-
                 path = str(BASE_DIR +"/"+ post.image.url)
                 client = ImgurClient('13b7a6dc4e65cab', 'fdb7b0994e9cdca1303402e208c01eafafac0122')
                 post.image_url = client.upload_from_path(path, anon=True)['link']
@@ -106,16 +108,15 @@ def post_view(request):
                 for z in range(0, len(clarifai_data)):
                     print clarifai_data[z]
                 return redirect('/feed/')
-
-
         else:
             form = PostForm()
         return render(request, 'post.html', {'form': form})
-
     else:
         return redirect('/login/')
 
-#like function in feed view
+
+# like function in feed view
+
 def feed_view(request):
     user = check_validation(request)
     if user:
@@ -129,7 +130,9 @@ def feed_view(request):
     else:
         return redirect('/login/')
 
-#view for like
+
+# view for like
+
 def like_view(request):
     user = check_validation(request)
     if user and request.method == 'POST':
@@ -145,21 +148,57 @@ def like_view(request):
     else:
         return redirect('/login/')
 
-#view for comment
+
+# view for comment
+
 def comment_view(request):
-  user = check_validation(request)
-  if user and request.method == 'POST':
-    form = CommentForm(request.POST)
-    if form.is_valid():
-      post_id = form.cleaned_data.get('post').id
-      comment_text = form.cleaned_data.get('comment_text')
-      comment = CommentModel.objects.create(user=user, post_id=post_id, comment_text=comment_text)
-      comment.save()
-      return redirect('/feed/')
+    user = check_validation(request)
+    if user and request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            post_id = form.cleaned_data.get('post').id
+            comment_text = form.cleaned_data.get('comment_text')
+            comment = CommentModel.objects.create(user=user, post_id=post_id, comment_text=comment_text)
+            comment.save()
+            return redirect('/feed/')
+        else:
+            return redirect('/feed/')
     else:
-      return redirect('/feed/')
-  else:
-    return redirect('/login')
+        return redirect('/login')
 
 
+# view for logout from feed page
+
+def logout_view(request):
+    user = check_validation(request)
+    if user:
+        token=SessionToken.objects.get(session_token=request.COOKIES.get("session_token"))
+        token.is_valid=False
+        token.save()
+    return redirect('/login/')
+
+
+# UpVote view
+def UpVote_view(request):
+    user = check_validation(request)
+    comment = None
+    print ("UpVote View")
+
+    if user and request.method == 'POST':
+        form = UpVoteForm(request.POST)
+        if form.is_valid():
+            comment_id = int(form.cleaned_data.get('id'))
+            comment = CommentModel.objects.filter(id=comment_id).first()
+            print ("UpVoted not yet")
+
+            if comment is not None:
+                print ("UpVoted")
+                comment.UpVote_num += 1
+                comment.save()
+                print (comment.UpVote_num)
+            else:
+                print('stupid mistake')
+        return redirect('/feed/')
+    else:
+        return redirect('/feed/')
 

@@ -1,6 +1,11 @@
+<!--for post request -->
+
 <form method="post">
      {% csrf_token %}
-<style>
+
+    <!--In style tag body background,img size and focus on box etc.  -->
+    <style>
+
 body{
   text-align:center;
   background: url("https://ak3.picdn.net/shutterstock/videos/26423345/thumb/1.jpg");
@@ -9,59 +14,68 @@ body{
   background-position: center;
   color: white;
   font-family: helvetica;}
- img{
+
+
+img{
   border-radius: 100%;
   border: 1px solid #ddd;
   padding: 5px;
   width: 130px;
+   }
 
 
-
- }
- input[type=text] {
+input[type=text] {
     width: 20%;
     padding: 8px 8px;
     margin: 8px 0;
-
     }
-    input[type=text]:focus {
+
+input[type=text]:focus {
     border: 3px solid #555;
 }
+
+
 input[type=password] {
     width: 20%;
     padding: 8px 8px;
     margin: 8px 0;
+}
 
-    }
-      input[type=password]:focus {
+input[type=password]:focus {
     border: 3px solid #555;
 }
- p{
-      font-size: 22px;
+
+p{
+    font-size: 22px;
     }
-    .right {
+
+.right {
     padding: 70px 0;
-
     text-align: center;
-}
-  </style>
-<body>
-<div class="right">
- <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTE_asoZyfEzU-Fqj-zUbfhS7Ea0TnowkNhGwi5ASCHL4Xtjxya">
+    }
 
- <p>Login Form</p>
-      <div>
+</style>
+<!-- this is our html page body -->
+
+    <body>
+        <div class="right">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTE_asoZyfEzU-Fqj-zUbfhS7Ea0TnowkNhGwi5ASCHL4Xtjxya">
+
+        <p>Login Form</p>
+        <div>
           <label for="username">Username: </label>
           <input id="username" class="form-control" type="text" name="username"required value={{ username }}>
-      </div>
+        </div>
 
-      <div>
+        <div>
           <label for="password">Password: </label>
           <input id="password" class="form-control" type="password" name="password" required value={{ password }}>
-      </div>
-     <h3>{{message}}</h3>
+        </div>
+            <h3>{{message}}</h3>
 
       <input type="submit" value="Log In">
-</div>
-</body>
+        </div>
+
+    </body>
+
  </form>

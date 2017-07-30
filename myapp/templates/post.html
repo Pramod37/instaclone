@@ -1,7 +1,43 @@
-<html>
-     <form method="POST" enctype="multipart/form-data">
-       {% csrf_token %}
-       {{ form }}
-       <input type="submit" class="btn btn-default" value="Add a picture">
-     </form>
+<!DOCTYPE html>
+
+<head>
+    <title>Post</title>
+<style>
+body{
+    text-align: center;
+    background: url("http://www.9zap.com/wp-content/uploads/2010/06/29.jpg");
+    background-repeat:no-repeat;
+    background-size:cover;}
+
+img{
+  border-radius: 100%;
+  border: 1px solid #ddd;
+  padding: 5px;
+  width: 130px;
+   }
+
+.right {
+    padding: 70px 0;
+    text-align: center;
+    }
+
+
+</style>
+</head>
+
+<body>
+     <div class="right">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTE_asoZyfEzU-Fqj-zUbfhS7Ea0TnowkNhGwi5ASCHL4Xtjxya">
+
+    <h3>Uplaod Media</h3>
+    <div align="center">
+        <form method="post" enctype="multipart/form-data" id="form" style="width:700px;">
+            {% csrf_token %}
+            <input id="image" name="image" type="file"  value={{ image }}><br>
+            <input id="caption" name="caption" type="text" placeholder="Caption" size="60" value={{ caption }}><br>
+            <input type="submit" class="button" value="Add Image">
+        </form>
+    </div>
+</body>
+
 </html>

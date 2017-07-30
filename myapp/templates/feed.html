@@ -5,17 +5,31 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+
+    <style>
+    p.one {
+    border-style: solid;
+    border-width: 2px;
+    width: 345px
+}
+    </style>
 </head>
 <body>
+<h3>InstaClone</h3>
+
     <form method="post" action="/post/">
         {% csrf_token %}
-        <input type="submit" class="btn-default btn" value="Create Post">
+        <input type="submit" class="btn-default btn" value="Create Post"></form>
+        <form method="get" action="/logout/">
+              {% csrf_token %}
+
+        <input type="submit" class="btn-default btn" value="Logout">
     </form>
 
 
     {% for post in posts %}
-        <h4> Posted by: {{ post.user.username }} </h4>
-        <p>[{{ post.created_on }}]</p>
+        <p class="one">Posted by: {{ post.user.username }}<br>
+        [{{ post.created_on }}]<br></p>
         <img style="display:inline-block; width:350px; height:300px;"
              src="{{ post.image_url }}" /><br>
         <span  style="display:inline-block;">{{ post.caption }}</span><br/><br/>
@@ -48,11 +62,16 @@
         <div>
             {% for comment in post.comments %}
                 <p><b>{{ comment.user.username }} [{{ comment.created_on }}]:</b> {{ comment.comment_text }}</p>
+            <form method="POST" action="/UpVote/">
+                {% csrf_token %}
+                <input type="hidden" name="id" value="{{ comment.id }}">
+                <input type="submit"  class="btn btn-default " value="UpVote">
+                </form><span>UpVotes: {{comment.UpVote_num}}</span>
+
+
+
             {% endfor %}
         </div>
-
-
-
 {% endfor %}
 </body>
 </html>
