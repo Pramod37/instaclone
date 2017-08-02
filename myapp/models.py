@@ -46,7 +46,7 @@ class PostModel(models.Model):
     def comments(self):
         return CommentModel.objects.filter(post=self).order_by('-created_on')
 
-
+# model for use clarifai
 class clarifai_data(models.Model):
     user = models.ForeignKey(UserModel)
     clarifai_data = models.CharField(max_length=100)
@@ -66,12 +66,14 @@ class LikeModel(models.Model):
 class CommentModel(models.Model):
     user = models.ForeignKey(UserModel)
     post = models.ForeignKey(PostModel)
-    UpVote_num = models.IntegerField(default=0)
+    upvote_num = models.IntegerField(default=0)
     comment_text = models.CharField(max_length=555)
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
 
 
+
+# models for show category
 class CategoryModel(models.Model):
 	user = models.ForeignKey(UserModel)
 	post = models.ForeignKey(PostModel)

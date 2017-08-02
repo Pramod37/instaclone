@@ -4,11 +4,12 @@ from __future__ import unicode_literals
 from django.shortcuts import render, redirect
 from datetime import timedelta
 from django.utils import timezone
-from forms import SignUpForm, LoginForm, PostForm, LikeForm, CommentForm, UpVoteForm
+from forms import SignUpForm, LoginForm, PostForm, LikeForm, CommentForm, Upvoteform
 from django.contrib.auth.hashers import make_password, check_password
 from models import UserModel, SessionToken, PostModel, LikeModel, CommentModel, CategoryModel
 from instaclone.settings import BASE_DIR
 from imgurpython import ImgurClient
+from myapp.keys import YOUR_CLIENT_ID,YOUR_CLIENT_SECRET,SENDGRID_API_KEY
 from clarifai.rest import ClarifaiApp
 import json
 import sendgrid
@@ -33,11 +34,11 @@ def signup_view(request):
                     password = form.cleaned_data['password']
                     user = UserModel(name=name, password=make_password(password), email=email, username=username)
                     user.save()
-                    sg = sendgrid.SendGridAPIClient(apikey=os.environ.get('wNiZdpTlqpiE-QeuIu-A.-QoPtzGhPcGMRXGfI7Jw6wYJjg_BFUZXvwKL4Bgrvr4'))
+                    sg = sendgrid.SendGridAPIClient(apikey=(SENDGRID_API_KEY))
                     from_email = Email("prmdmriu@gmail.com")
                     to_email = Email(form.cleaned_data['email'])
                     subject = "Welcome to Smartblog"
-                    content = Content("text/plain","Team Smartblog welcomes you!\n We hope you enjoy sharing your precious moments blogging them /n")
+                    content = Content("text/plain","Team Instaclone welcomes you!\n We hope you enjoy sharing your precious moments blogging them /n")
                     mail = Mail(from_email, subject, to_email, content)
                     response = sg.client.mail.send.post(request_body=mail.get())
                     print(response.status_code)
@@ -81,10 +82,9 @@ def login_view(request):
     return render(request, 'login.html' ,response_data)
 
 
-# view for feed page
+# feed view show post,psted by logged in user
 
-def feed_view(request):
-    return render(request, 'feed.html')
+
 
 
 # For validating the session
@@ -101,7 +101,7 @@ def check_validation(request):
         return None
 
 
-# view to upload a image in post
+# post view function to upload a image for feed page nd use of clarifai for category
 
 def post_view(request):
     user = check_validation(request)
@@ -117,7 +117,7 @@ def post_view(request):
                 post = PostModel(user=user, image=image, caption=caption)
                 post.save()
                 path = str(BASE_DIR +"/"+ post.image.url)
-                client = ImgurClient('13b7a6dc4e65cab', 'fdb7b0994e9cdca1303402e208c01eafafac0122')
+                client = ImgurClient(YOUR_CLIENT_ID, YOUR_CLIENT_SECRET)
                 post.image_url = client.upload_from_path(path, anon=True)['link']
                 post.save()
                 clarifai_data = []
@@ -139,7 +139,7 @@ def post_view(request):
         return redirect('/login/')
 
 
-# like function in feed view
+# feed view show post,posted by logged in user
 
 def feed_view(request):
     user = check_validation(request)
@@ -155,7 +155,7 @@ def feed_view(request):
         return redirect('/login/')
 
 
-# view for like
+# like view function for like a post by loggedin user
 
 def like_view(request):
     user = check_validation(request)
@@ -173,8 +173,8 @@ def like_view(request):
         return redirect('/login/')
 
 
-# view for comment
-
+# comment view function for comment on a post
+# send an alert email when comment by an user on any user post by sendgrid
 def comment_view(request):
     user = check_validation(request)
     if user and request.method == 'POST':
@@ -184,12 +184,11 @@ def comment_view(request):
             comment_text = form.cleaned_data.get('comment_text')
             comment = CommentModel.objects.create(user=user, post_id=post_id, comment_text=comment_text)
             comment.save()
-            sg = sendgrid.SendGridAPIClient(apikey=os.environ.get('wNiZdpTlqpiE-QeuIu-A.-QoPtzGhPcGMRXGfI7Jw6wYJjg_BFUZXvwKL4Bgrvr4'))
+            sg = sendgrid.SendGridAPIClient(apikey=(SENDGRID_API_KEY))
             from_email = Email("prmdmriu@gmail.com")
-            to_email = Email(comment.post.user.email)
+            to_email = Email(form.cleaned_data['email'])
             subject = "Welcome to Instaclone"
-            content = Content("text/plain",
-                              "Team Smartblog welcomes you!\n We hope you enjoy sharing your precious moments blogging them /n")
+            content = Content("text/plain","Team Instaclone welcomes you!\n We hope you enjoy sharing your precious moments blogging them /n")
             mail = Mail(from_email, subject, to_email, content)
             response = sg.client.mail.send.post(request_body=mail.get())
             print(response.status_code)
@@ -201,8 +200,23 @@ def comment_view(request):
     else:
         return redirect('/login')
 
+# Function to view to see post from a particular user
+def self_view(request):
+    user = check_validation(request)
+    if user:
+        posts = PostModel.objects.filter(user=user).order_by('-created_on')
+        for post in posts:
+            existing_like = LikeModel.objects.filter(post_id=post.id, user=user).first()
+            if existing_like:
+                post.has_liked = True
+            return render(request, 'feed.html', {'posts': posts, 'user': user})
+        else:
+            return redirect('/login/')
 
-# view for logout from feed page
+
+
+
+# logout function view for logout from feed page
 
 def logout_view(request):
     user = check_validation(request)
@@ -213,30 +227,35 @@ def logout_view(request):
     return redirect('/login/')
 
 
-# UpVote view
-def UpVote_view(request):
+# UpVote view function to upvote any comment
+def upvote_view(request):
     user = check_validation(request)
     comment = None
-    print ("UpVote View")
 
+    print ("upvote view")
     if user and request.method == 'POST':
-        form = UpVoteForm(request.POST)
+
+        form = Upvoteform(request.POST)
         if form.is_valid():
+
             comment_id = int(form.cleaned_data.get('id'))
+
             comment = CommentModel.objects.filter(id=comment_id).first()
-            print ("UpVoted not yet")
+            print ("upvoted not yet")
 
             if comment is not None:
-                print ("UpVoted")
-                comment.UpVote_num += 1
+                # print ' unliking post'
+                print ("upvoted")
+                comment.upvote_num+=1
                 comment.save()
-                print (comment.UpVote_num)
+                print (comment.upvote_num)
             else:
-                print('stupid mistake')
+                print ('stupid mistake')
+                #liked_msg = 'Unliked!'
+
         return redirect('/feed/')
     else:
         return redirect('/feed/')
-
 
 # this view show the automatic categories
 def add_category(post):

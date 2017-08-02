@@ -37,6 +37,5 @@ class CommentForm(forms.ModelForm):
         fields = ['comment_text', 'post']
 
 
-# UpVote form
-class UpVoteForm(forms.Form):
-    id = forms.IntegerField
+class  Upvoteform(forms.Form):
+   id = forms.IntegerField()
